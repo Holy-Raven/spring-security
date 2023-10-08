@@ -11,7 +11,10 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+
+import javax.sql.DataSource;
 
 @Configuration
 @EnableWebSecurity
@@ -38,12 +41,38 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .logout().logoutSuccessUrl("/");
     }
 
-
 //    два созданных юзера лежат в памяти
-
-//    вариант 1
+//    вариант 1 In memory
+    @Bean
+    public UserDetailsService users() {
+        UserDetails user = User.builder()
+                .username("user")
+                .password("{bcrypt}$2a$12$mueU3Jxp8Ei.U82KcrT3ue1FoWRC4RPGEFzFTRW.0RmiMa7INvEvi")
+                .roles("USER")
+                .build();
+        UserDetails admin = User.builder()
+                .username("admin")
+                .password("{bcrypt}$2a$12$mueU3Jxp8Ei.U82KcrT3ue1FoWRC4RPGEFzFTRW.0RmiMa7INvEvi")
+                .roles("USER", "ADMIN")
+                .build();
+        return new InMemoryUserDetailsManager(user, admin);
+    }
+//    вариант 2
+//    @Autowired
+//    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+//
+//        auth.inMemoryAuthentication()
+//                    .withUser("user")
+//                    .password("{bcrypt}$2a$12$mueU3Jxp8Ei.U82KcrT3ue1FoWRC4RPGEFzFTRW.0RmiMa7INvEvi")
+//                    .roles("USER")
+//                .and()
+//                    .withUser("admin")
+//                    .password("{bcrypt}$2a$12$mueU3Jxp8Ei.U82KcrT3ue1FoWRC4RPGEFzFTRW.0RmiMa7INvEvi")
+//                    .roles("ADMIN", "USER");
+//    }
+//    вариант 3 Jdbs Authentication (у меня не сохраняет в базу)
 //    @Bean
-//    public UserDetailsService users() {
+//    public JdbcUserDetailsManager users(DataSource dataSource) {
 //        UserDetails user = User.builder()
 //                .username("user")
 //                .password("{bcrypt}$2a$12$mueU3Jxp8Ei.U82KcrT3ue1FoWRC4RPGEFzFTRW.0RmiMa7INvEvi")
@@ -54,29 +83,21 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 //                .password("{bcrypt}$2a$12$mueU3Jxp8Ei.U82KcrT3ue1FoWRC4RPGEFzFTRW.0RmiMa7INvEvi")
 //                .roles("USER", "ADMIN")
 //                .build();
-//        return new InMemoryUserDetailsManager(user, admin);
+//        JdbcUserDetailsManager users = new JdbcUserDetailsManager(dataSource);
+//
+//        //если юзер уже существувт, его необходимо удалить
+//        if (users.userExists(user.getUsername())) {
+//            users.deleteUser(user.getUsername());
+//        }
+//        //если админ уже существует его необходимо удалить
+//        if (users.userExists(admin.getUsername())) {
+//            users.deleteUser(admin.getUsername());
+//        }
+//        //сохраняем в базу юзера и адмна
+//        users.createUser(user);
+//        users.createUser(admin);
+//
+//        return users;
 //    }
-//    вариант 2
-    @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
 
-        auth.inMemoryAuthentication()
-                    .withUser("user")
-                    .password("{bcrypt}$2a$12$mueU3Jxp8Ei.U82KcrT3ue1FoWRC4RPGEFzFTRW.0RmiMa7INvEvi")
-                    .roles("USER")
-                .and()
-                    .withUser("admin")
-                    .password("{bcrypt}$2a$12$mueU3Jxp8Ei.U82KcrT3ue1FoWRC4RPGEFzFTRW.0RmiMa7INvEvi")
-                    .roles("ADMIN", "USER");
-    }
 }
-
-
-//    @Override
-//    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-//        auth.jdbcAuthentication()
-//                .dataSource(dataSource)
-//                .passwordEncoder(NoOpPasswordEncoder.getInstance())
-//                .usersByUsernameQuery("select username, password, active from t_user where username = ?")
-//                .authoritiesByUsernameQuery("select u.username, ur.roles from t_user u inner user_role ur on u.id = ur.user_id where u.username = ?");
-//    }
